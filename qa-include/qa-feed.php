@@ -299,7 +299,7 @@ $lines[] = '<channel>';
 
 $lines[] = '<title>' . qa_xml($sitetitle . ' - ' . $title) . '</title>';
 $lines[] = '<link>' . qa_xml(qa_path($linkrequest, $linkparams, $siteurl)) . '</link>';
-$lines[] = '<description>Powered by Question2Answer</description>';
+$lines[] = '<description>Powered by Bidbarg.com</description>';
 
 foreach ($questions as $question) {
 	// Determine whether this is a question, answer or comment, and act accordingly

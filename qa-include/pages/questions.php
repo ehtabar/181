@@ -33,6 +33,7 @@ $countslugs = count($categoryslugs);
 
 $sort = ($countslugs && !QA_ALLOW_UNINDEXED_QUERIES) ? null : qa_get('sort');
 $start = qa_get_start();
+$pagesize = qa_opt('page_size_home');
 $userid = qa_get_logged_in_userid();
 
 
@@ -71,7 +72,7 @@ if ($countslugs) {
 		return include QA_INCLUDE_DIR . 'qa-page-not-found.php';
 	}
 
-	$categorytitlehtml = qa_html($categories[$categoryid]['title']);
+	$categorytitlehtml = qa_html($categories[$categoryid]['subject']);
 	$nonetitle = qa_lang_html_sub('main/no_questions_in_x', $categorytitlehtml);
 
 } else {
@@ -109,12 +110,21 @@ switch ($sort) {
 		break;
 }
 
+$sometitle_array = array();
+if(isset($categories[$categoryid]['subject'])) {
+		$sometitle_array['subject']=qa_html($categories[$categoryid]['subject']);
+		$sometitle=$sometitle_array;
+	}
+if(isset($categories[$categoryid]['page_title'])) {
+		$sometitle_array['page_title']=qa_html($categories[$categoryid]['page_title']);
+		$sometitle=$sometitle_array;
+	}
 
 // Prepare and return content for theme
 
 $qa_content = qa_q_list_page_content(
 	$questions, // questions
-	qa_opt('page_size_qs'), // questions per page
+	$pagesize, // questions per page
 	$start, // start offset
 	$countslugs ? $categories[$categoryid]['qcount'] : qa_opt('cache_qcount'), // total count
 	$sometitle, // title if some questions
@@ -128,10 +138,37 @@ $qa_content = qa_q_list_page_content(
 	$linkparams, // extra parameters for page links
 	$linkparams // category nav params
 );
-
 if (QA_ALLOW_UNINDEXED_QUERIES || !$countslugs) {
 	$qa_content['navigation']['sub'] = qa_qs_sub_navigation($sort, $categoryslugs);
 }
+$request = qa_request();
+$new_request  = '';
+if($request == ''){
+	$new_request = '';
+}elseif ($request == 'questions'){
+	$new_request = '';
+}elseif (strpos($request, "questions/" ) == 0){
+	$new_request = str_replace("questions/","",qa_request());
+}
+//$qa_content['page_links'] = qa_html_page_links($new_request, $start, $pagesize, $countslugs ? $categories[$categoryid]['qcount'] : qa_opt('cache_qcount'), qa_opt('pages_prev_next'));
+$qa_content['page_links'] = qa_html_page_links($request, $start, $pagesize, $countslugs ? $categories[$categoryid]['qcount'] : qa_opt('cache_qcount'), qa_opt('pages_prev_next'));
+foreach ($qa_content['page_links']['items'] as $key => $item){
+	//$qa_content['page_links']['items'][$key]['rel'] = 'canonical';
+}
+$params = array();
 
+// variable assignment intentional here
+if (($start = qa_get_start()) > 0) {
+	$params['start'] = $start;
+}
+if ($sort = qa_get('sort')) {
+	$params['sort'] = $sort;
+}
+if ($by = qa_get('by')) {
+	$params['by'] = $by;
+}
+
+$qa_content['canonical'] = qa_path_html($new_request, $params, qa_opt('site_url'));
 
 return $qa_content;
+

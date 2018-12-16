@@ -59,60 +59,48 @@ function qa_mailing_stop()
 function qa_mailing_perform_step()
 {
 	require_once QA_INCLUDE_DIR . 'db/users.php';
-	require_once QA_INCLUDE_DIR . 'app/users.php';
 
 	$lastuserid = qa_opt('mailing_last_userid');
 
-	if (strlen($lastuserid) == 0) {
-		return;
-	}
+	if (strlen($lastuserid)) {
+		$thistime = time();
+		$lasttime = qa_opt('mailing_last_timestamp');
+		$perminute = qa_opt('mailing_per_minute');
 
-	$thistime = time();
-	$lasttime = qa_opt('mailing_last_timestamp');
-	$perminute = qa_opt('mailing_per_minute');
+		if (($lasttime - $thistime) > 60) // if it's been a while, we assume there hasn't been continuous mailing...
+			$lasttime = $thistime - 1; // ... so only do 1 second's worth
+		else // otherwise...
+			$lasttime = max($lasttime, $thistime - 6); // ... don't do more than 6 seconds' worth
 
-	if (($lasttime - $thistime) > 60) // if it's been a while, we assume there hasn't been continuous mailing...
-		$lasttime = $thistime - 1; // ... so only do 1 second's worth
-	else // otherwise...
-		$lasttime = max($lasttime, $thistime - 6); // ... don't do more than 6 seconds' worth
+		$count = min(floor(($thistime - $lasttime) * $perminute / 60), 100); // don't do more than 100 messages at a time
 
-	$count = min(floor(($thistime - $lasttime) * $perminute / 60), 100); // don't do more than 100 messages at a time
+		if ($count > 0) {
+			qa_opt('mailing_last_timestamp', $thistime + 30);
+			// prevents a parallel call to qa_mailing_perform_step() from sending messages, unless we're very unlucky with timing (poor man's mutex)
 
-	if ($count == 0) {
-		return;
-	}
+			$sentusers = 0;
+			$users = qa_db_users_get_mailing_next($lastuserid, $count);
 
-	qa_opt('mailing_last_timestamp', $thistime + 30);
-	// prevents a parallel call to qa_mailing_perform_step() from sending messages, unless we're very unlucky with timing (poor man's mutex)
+			if (count($users)) {
+				foreach ($users as $user) {
+					$lastuserid = max($lastuserid, $user['userid']);
+				}
 
-	$sentusers = 0;
-	$users = qa_db_users_get_mailing_next($lastuserid, $count);
+				qa_opt('mailing_last_userid', $lastuserid);
+				qa_opt('mailing_done_users', qa_opt('mailing_done_users') + count($users));
 
-	if (count($users)) {
-		foreach ($users as $user) {
-			$lastuserid = max($lastuserid, $user['userid']);
+				foreach ($users as $user) {
+					if (!($user['flags'] & QA_USER_FLAGS_NO_MAILINGS)) {
+						qa_mailing_send_one($user['userid'], $user['handle'], $user['email'], $user['emailcode']);
+						$sentusers++;
+					}
+				}
+
+				qa_opt('mailing_last_timestamp', $lasttime + $sentusers * 60 / $perminute); // can be floating point result, based on number of mails actually sent
+
+			} else
+				qa_mailing_stop();
 		}
-
-		qa_opt('mailing_last_userid', $lastuserid);
-		qa_opt('mailing_done_users', qa_opt('mailing_done_users') + count($users));
-
-		$isModeratingUsers = qa_opt('moderate_users');
-
-		foreach ($users as $user) {
-			if (($user['flags'] & QA_USER_FLAGS_NO_MAILINGS) || // exclude users who don't want to get the mailings
-				($user['flags'] & QA_USER_FLAGS_USER_BLOCKED) || // exclude blocked users
-				($isModeratingUsers && ($user['level'] < QA_USER_LEVEL_APPROVED))) { // if moderating users exclude unapproved users
-				continue;
-			}
-
-			qa_mailing_send_one($user['userid'], $user['handle'], $user['email'], $user['emailcode']);
-			$sentusers++;
-		}
-
-		qa_opt('mailing_last_timestamp', $lasttime + $sentusers * 60 / $perminute); // can be floating point result, based on number of mails actually sent
-
-	} else {
-		qa_mailing_stop();
 	}
 }
 

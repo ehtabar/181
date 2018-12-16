@@ -184,10 +184,10 @@ class qa_html_theme extends qa_html_theme_base
 				$login = $this->content['navigation']['user']['login'];
 				$this->output(
 					'<form action="' . $login['url'] . '" method="post">',
-						'<input type="text" name="emailhandle" dir="auto" placeholder="' . trim(qa_lang_html(qa_opt('allow_login_email_only') ? 'users/email_label' : 'users/email_handle_label'), ':') . '"/>',
-						'<input type="password" name="password" dir="auto" placeholder="' . trim(qa_lang_html('users/password_label'), ':') . '"/>',
-						'<div><input type="checkbox" name="remember" id="qam-rememberme" value="1"/>',
-						'<label for="qam-rememberme">' . qa_lang_html('users/remember') . '</label></div>',
+						// '<input type="text" name="emailhandle" dir="auto" placeholder="' . trim(qa_lang_html(qa_opt('allow_login_email_only') ? 'users/email_label' : 'users/email_handle_label'), ':') . '"/>',
+						// '<input type="password" name="password" dir="auto" placeholder="' . trim(qa_lang_html('users/password_label'), ':') . '"/>',
+						// '<div><input type="checkbox" name="remember" id="qam-rememberme" value="1"/>',
+						// '<label for="qam-rememberme">' . qa_lang_html('users/remember') . '</label></div>',
 						'<input type="hidden" name="code" value="' . qa_html(qa_get_form_security_code('login')) . '"/>',
 						'<input type="submit" value="' . $login['label'] . '" class="qa-form-tall-button qa-form-tall-button-login" name="dologin"/>',
 					'</form>'
@@ -618,7 +618,7 @@ class qa_html_theme extends qa_html_theme_base
 		// floated right
 		$this->output(
 			'<div class="qa-attribution">',
-			'Snow Theme by <a href="http://www.q2amarket.com">Q2A Market</a>',
+			'AsK Theme by <a href="https://www.bidbarg.com">bidbarg</a>',
 			'</div>'
 		);
 		parent::attribution();
@@ -741,15 +741,5 @@ class qa_html_theme extends qa_html_theme_base
 			'<div class="qam-search-mobile ' . $this->ask_search_box_class . '" id="qam-search-mobile">' .
 			'</div>' .
 			'</div>';
-	}
-	
-	/**
-	 * Adds placeholder "Search..." for search box
-	 *
-	 * @since Snow 1.4
-	 */
-	public function search_field($search)
-	{
-		$this->output('<input type="text" ' .'placeholder="' . $search['button_label'] . '..." ' . $search['field_tags'] . ' value="' . @$search['value'] . '" class="qa-search-field"/>');
 	}
 }

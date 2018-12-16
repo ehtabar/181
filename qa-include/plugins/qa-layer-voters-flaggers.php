@@ -142,7 +142,11 @@ class qa_html_theme_layer extends qa_html_theme_base
 
 	// Utility functions for this layer
 
-	private function queue_post_voters_flaggers($post)
+	/**
+	 * @deprecated This function will become private in Q2A 1.8. It is specific to this plugin and
+	 * should not be used by outside code.
+	 */
+	public function queue_post_voters_flaggers($post)
 	{
 		if (!qa_user_post_permit_error('permit_view_voters_flaggers', $post)) {
 			$postkeys = array('postid', 'opostid');
@@ -153,7 +157,11 @@ class qa_html_theme_layer extends qa_html_theme_base
 		}
 	}
 
-	private function queue_raw_posts_voters_flaggers($posts)
+	/**
+	 * @deprecated This function will become private in Q2A 1.8. It is specific to this plugin and
+	 * should not be used by outside code.
+	 */
+	public function queue_raw_posts_voters_flaggers($posts)
 	{
 		if (is_array($posts)) {
 			foreach ($posts as $post) {
@@ -163,7 +171,11 @@ class qa_html_theme_layer extends qa_html_theme_base
 		}
 	}
 
-	private function retrieve_queued_voters_flaggers()
+	/**
+	 * @deprecated This function will become private in Q2A 1.8. It is specific to this plugin and
+	 * should not be used by outside code.
+	 */
+	public function retrieve_queued_voters_flaggers()
 	{
 		if (count($this->qa_voters_flaggers_queue)) {
 			require_once QA_INCLUDE_DIR . 'db/votes.php';
@@ -196,7 +208,11 @@ class qa_html_theme_layer extends qa_html_theme_base
 		}
 	}
 
-	private function get_post_voters_flaggers($post, $postid)
+	/**
+	 * @deprecated This function will become private in Q2A 1.8. It is specific to this plugin and
+	 * should not be used by outside code.
+	 */
+	public function get_post_voters_flaggers($post, $postid)
 	{
 		require_once QA_INCLUDE_DIR . 'util/sort.php';
 
