@@ -208,10 +208,11 @@ class qa_html_theme_base
 	 */
 	public function widgets($region, $place)
 	{
-		if (count(@$this->content['widgets'][$region][$place])) {
+		$widgetsHere = isset($this->content['widgets'][$region][$place]) ? $this->content['widgets'][$region][$place] : array();
+		if (is_array($widgetsHere) && count($widgetsHere) > 0) {
 			$this->output('<div class="qa-widgets-' . $region . ' qa-widgets-' . $region . '-' . $place . '">');
 
-			foreach ($this->content['widgets'][$region][$place] as $module) {
+			foreach ($widgetsHere as $module) {
 				$this->output('<div class="qa-widget-' . $region . ' qa-widget-' . $region . '-' . $place . '">');
 				$module->output_widget($region, $place, $this, $this->template, $this->request, $this->content);
 				$this->output('</div>');
@@ -395,8 +396,7 @@ class qa_html_theme_base
 
 	public function body_hidden()
 	{
-		$indent = $this->isRTL ? '9999px' : '-9999px';
-		$this->output('<div style="position:absolute; left:' . $indent . '; top:-9999px;">');
+		$this->output('<div style="position:absolute;overflow:hidden;clip:rect(0 0 0 0);height:0;width:0;margin:0;padding:0;border:0;">');
 		$this->waiting_template();
 		$this->output('</div>');
 	}
@@ -629,8 +629,10 @@ class qa_html_theme_base
 			(@$navlink['state'] ? (' qa-' . $class . '-' . $navlink['state']) : '') . ' qa-' . $class . '-' . $suffix . '">');
 		$this->nav_link($navlink, $class);
 
-		if (count(@$navlink['subnav']))
-			$this->nav_list($navlink['subnav'], $class, 1 + $level);
+		$subnav = isset($navlink['subnav']) ? $navlink['subnav'] : array();
+		if (is_array($subnav) && count($subnav) > 0) {
+			$this->nav_list($subnav, $class, 1 + $level);
+		}
 
 		$this->output('</li>');
 	}
@@ -2193,7 +2195,7 @@ class qa_html_theme_base
 	{
 		$content = isset($q_view['content']) ? $q_view['content'] : '';
 
-		$this->output('<div class="qa-q-view-content">');
+		$this->output('<div class="qa-q-view-content qa-post-content">');
 		$this->output_raw($content);
 		$this->output('</div>');
 	}
@@ -2356,7 +2358,7 @@ class qa_html_theme_base
 			$a_item['content'] = '';
 		}
 
-		$this->output('<div class="qa-a-item-content">');
+		$this->output('<div class="qa-a-item-content qa-post-content">');
 		$this->output_raw($a_item['content']);
 		$this->output('</div>');
 	}
@@ -2462,7 +2464,7 @@ class qa_html_theme_base
 			$c_item['content'] = '';
 		}
 
-		$this->output('<div class="qa-c-item-content">');
+		$this->output('<div class="qa-c-item-content qa-post-content">');
 		$this->output_raw($c_item['content']);
 		$this->output('</div>');
 	}

@@ -892,7 +892,7 @@ function qa_db_search_posts_selectspec($voteuserid, $titlewords, $contentwords, 
 
 	$selectspec['columns'][] = 'score';
 	$selectspec['columns'][] = 'matchparts';
-	$selectspec['source'] .= " JOIN (SELECT questionid, SUM(score)+2*(LOG(#)*(^posts.hotness-(SELECT MIN(hotness) FROM ^posts WHERE type='Q'))/((SELECT MAX(hotness) FROM ^posts WHERE type='Q')-(SELECT MIN(hotness) FROM ^posts WHERE type='Q')))+LOG(questionid)/1000000 AS score, GROUP_CONCAT(CONCAT_WS(':', matchposttype, matchpostid, ROUND(score,3))) AS matchparts FROM (";
+	$selectspec['source'] .= " JOIN (SELECT questionid, SUM(score)+2*(LOG(#)*(MAX(^posts.hotness)-(SELECT MIN(hotness) FROM ^posts WHERE type='Q'))/((SELECT MAX(hotness) FROM ^posts WHERE type='Q')-(SELECT MIN(hotness) FROM ^posts WHERE type='Q')))+LOG(questionid)/1000000 AS score, GROUP_CONCAT(CONCAT_WS(':', matchposttype, matchpostid, ROUND(score,3))) AS matchparts FROM (";
 	$selectspec['sortdesc'] = 'score';
 	array_push($selectspec['arguments'], QA_IGNORED_WORDS_FREQ);
 
@@ -1070,19 +1070,35 @@ function qa_db_category_nav_selectspec($slugsorid, $isid, $ispostid = false, $fu
 		'SELECT categoryid FROM ^categories WHERE ' . $identifiersql, // gen below
 	);
 
+	$columns = array(
+		'parentid' => '^categories.parentid',
+		'title' => '^categories.title',
+		'tags' => '^categories.tags',
+		'qcount' => '^categories.qcount',
+		'position' => '^categories.position',
+	);
+
+	if ($full) {
+		foreach ($columns as $alias => $column) {
+			$columns[$alias] = 'MAX(' . $column . ')';
+		}
+
+		$columns['childcount'] = 'COUNT(child.categoryid)';
+		$columns['content'] = 'MAX(^categories.content)';
+		$columns['backpath'] = 'MAX(^categories.backpath)';
+	}
+
+	array_unshift($columns, '^categories.categoryid');
+
 	$selectspec = array(
-		'columns' => array('^categories.categoryid', '^categories.parentid', 'title' => '^categories.title', 'tags' => '^categories.tags', '^categories.qcount', '^categories.position'),
-		'source' => '^categories JOIN (' . implode(' UNION ', $parentselects) . ') y ON ^categories.parentid<=>parentkey' . ($full ? ' LEFT JOIN ^categories AS child ON child.parentid=^categories.categoryid GROUP BY ^categories.categoryid' : '') . ' ORDER BY ^categories.position',
+		'columns' => $columns,
+		'source' => '^categories JOIN (' . implode(' UNION ', $parentselects) . ') y ON ^categories.parentid<=>parentkey' .
+			($full ? ' LEFT JOIN ^categories AS child ON child.parentid=^categories.categoryid GROUP BY ^categories.categoryid' : '') .
+			' ORDER BY ^categories.position',
 		'arguments' => array($slugsorid, $slugsorid, $slugsorid, $slugsorid),
 		'arraykey' => 'categoryid',
 		'sortasc' => 'position',
 	);
-
-	if ($full) {
-		$selectspec['columns']['childcount'] = 'COUNT(child.categoryid)';
-		$selectspec['columns']['content'] = '^categories.content';
-		$selectspec['columns']['backpath'] = '^categories.backpath';
-	}
 
 	return $selectspec;
 }
@@ -1507,9 +1523,17 @@ function qa_db_top_users_selectspec($start, $count = null)
 		);
 	}
 
+	// If the site is configured to share the ^users table then there might not be a record in the ^userpoints table
+	if (defined('QA_MYSQL_USERS_PREFIX')) {
+		$basePoints = (int)qa_opt('points_base');
+		$source = '^users JOIN (SELECT ^users.userid, COALESCE(points,' . $basePoints . ') AS points FROM ^users LEFT JOIN ^userpoints ON ^users.userid=^userpoints.userid ORDER BY points DESC LIMIT #,#) y ON ^users.userid=y.userid';
+	} else {
+		$source = '^users JOIN (SELECT userid FROM ^userpoints ORDER BY points DESC LIMIT #,#) y ON ^users.userid=y.userid JOIN ^userpoints ON ^users.userid=^userpoints.userid';;
+	}
+
 	return array(
 		'columns' => array('^users.userid', 'handle', 'points', 'flags', '^users.email', 'avatarblobid' => 'BINARY avatarblobid', 'avatarwidth', 'avatarheight'),
-		'source' => '^users JOIN (SELECT userid FROM ^userpoints ORDER BY points DESC LIMIT #,#) y ON ^users.userid=y.userid JOIN ^userpoints ON ^users.userid=^userpoints.userid',
+		'source' => $source,
 		'arguments' => array($start, $count),
 		'arraykey' => 'userid',
 		'sortdesc' => 'points',

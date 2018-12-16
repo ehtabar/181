@@ -106,6 +106,9 @@ function qa_question_set_content($oldquestion, $title, $content, $format, $text,
 
 	} elseif ($oldquestion['type'] == 'Q') { // not hidden or queued
 		qa_post_index($oldquestion['postid'], 'Q', $oldquestion['postid'], $oldquestion['parentid'], $title, $content, $format, $text, $tagstring, $oldquestion['categoryid']);
+		if ($tagschanged) {
+			qa_db_tagcount_update();
+		}
 	}
 
 	$eventparams = array(
@@ -1013,7 +1016,7 @@ function qa_answer_to_comment($oldanswer, $parentid, $content, $format, $text, $
 
 	qa_update_q_counts_for_a($question['postid']);
 	qa_db_ccount_update();
-	qa_db_points_update_ifuser($oldanswer['userid'], array('aposts', 'aselecteds', 'cposts', 'avoteds'));
+	qa_db_points_update_ifuser($oldanswer['userid'], array('aposts', 'aselecteds', 'cposts', 'avoteds', 'cvoteds'));
 
 	$useridvotes = qa_db_uservote_post_get($oldanswer['postid']);
 	foreach ($useridvotes as $voteruserid => $vote) {

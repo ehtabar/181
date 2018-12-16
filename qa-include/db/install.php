@@ -260,7 +260,7 @@ function qa_db_table_definitions()
 			'content' => 'MEDIUMTEXT', // remainder of page HTML
 			'PRIMARY KEY (pageid)',
 			'KEY tags (tags)',
-			'UNIQUE position (position)',
+			'UNIQUE `position` (position)',
 		),
 
 		'widgets' => array(
@@ -273,7 +273,7 @@ function qa_db_table_definitions()
 			'tags' => 'VARCHAR(' . QA_DB_MAX_WIDGET_TAGS_LENGTH . ') CHARACTER SET ascii NOT NULL', // comma-separated list of templates to display on
 			'title' => 'VARCHAR(' . QA_DB_MAX_WIDGET_TITLE_LENGTH . ') NOT NULL', // name of widget module that should be displayed
 			'PRIMARY KEY (widgetid)',
-			'UNIQUE position (position)',
+			'UNIQUE `position` (position)',
 		),
 
 		'posts' => array(
@@ -555,7 +555,7 @@ function qa_array_to_keys($array)
  */
 function qa_db_missing_tables($definitions)
 {
-	$keydbtables = qa_array_to_keys(qa_db_list_tables());
+	$keydbtables = qa_array_to_keys(qa_db_list_tables(true));
 
 	$missing = array();
 
@@ -776,7 +776,7 @@ function qa_db_upgrade_tables()
 
 	// Write-lock all Q2A tables before we start so no one can read or write anything
 
-	$keydbtables = qa_array_to_keys(qa_db_list_tables());
+	$keydbtables = qa_array_to_keys(qa_db_list_tables(true));
 
 	foreach ($definitions as $rawname => $definition)
 		if (isset($keydbtables[qa_db_add_table_prefix($rawname)]))
@@ -870,8 +870,8 @@ function qa_db_upgrade_tables()
 					'qcount' => $definitions['categories']['qcount'],
 					'position' => $definitions['categories']['position'],
 					'PRIMARY KEY (categoryid)',
-					'UNIQUE tags (tags)',
-					'UNIQUE position (position)',
+					'UNIQUE `tags` (tags)',
+					'UNIQUE `position` (position)',
 				))); // hard-code list of columns and indexes to ensure we ignore any added at a later stage
 
 				$locktablesquery .= ', ^categories WRITE';
@@ -896,8 +896,8 @@ function qa_db_upgrade_tables()
 					'heading' => $definitions['pages']['heading'],
 					'content' => $definitions['pages']['content'],
 					'PRIMARY KEY (pageid)',
-					'UNIQUE tags (tags)',
-					'UNIQUE position (position)',
+					'UNIQUE `tags` (tags)',
+					'UNIQUE `position` (position)',
 				))); // hard-code list of columns and indexes to ensure we ignore any added at a later stage
 				$locktablesquery .= ', ^pages WRITE';
 				qa_db_upgrade_query($locktablesquery);
@@ -1037,7 +1037,7 @@ function qa_db_upgrade_tables()
 					'tags' => $definitions['widgets']['tags'],
 					'title' => $definitions['widgets']['title'],
 					'PRIMARY KEY (widgetid)',
-					'UNIQUE position (position)',
+					'UNIQUE `position` (position)',
 				)));
 
 				$locktablesquery .= ', ^widgets WRITE';
@@ -1587,18 +1587,20 @@ function qa_db_upgrade_tables()
 
 			case 67:
 				// ensure we don't have old userids lying around
-				qa_db_upgrade_query('ALTER TABLE ^messages MODIFY fromuserid ' . $definitions['messages']['fromuserid']);
-				qa_db_upgrade_query('ALTER TABLE ^messages MODIFY touserid ' . $definitions['messages']['touserid']);
-				qa_db_upgrade_query('UPDATE ^messages SET fromuserid=NULL WHERE fromuserid NOT IN (SELECT userid FROM ^users)');
-				qa_db_upgrade_query('UPDATE ^messages SET touserid=NULL WHERE touserid NOT IN (SELECT userid FROM ^users)');
-				// set up foreign key on messages table
-				qa_db_upgrade_query('ALTER TABLE ^messages ADD CONSTRAINT ^messages_ibfk_1 FOREIGN KEY (fromuserid) REFERENCES ^users(userid) ON DELETE SET NULL');
-				qa_db_upgrade_query('ALTER TABLE ^messages ADD CONSTRAINT ^messages_ibfk_2 FOREIGN KEY (touserid) REFERENCES ^users(userid) ON DELETE SET NULL');
+				if (!QA_FINAL_EXTERNAL_USERS) {
+					qa_db_upgrade_query('ALTER TABLE ^messages MODIFY fromuserid ' . $definitions['messages']['fromuserid']);
+					qa_db_upgrade_query('ALTER TABLE ^messages MODIFY touserid ' . $definitions['messages']['touserid']);
+					qa_db_upgrade_query('UPDATE ^messages SET fromuserid=NULL WHERE fromuserid NOT IN (SELECT userid FROM ^users)');
+					qa_db_upgrade_query('UPDATE ^messages SET touserid=NULL WHERE touserid NOT IN (SELECT userid FROM ^users)');
+					// set up foreign key on messages table
+					qa_db_upgrade_query('ALTER TABLE ^messages ADD CONSTRAINT ^messages_ibfk_1 FOREIGN KEY (fromuserid) REFERENCES ^users(userid) ON DELETE SET NULL');
+					qa_db_upgrade_query('ALTER TABLE ^messages ADD CONSTRAINT ^messages_ibfk_2 FOREIGN KEY (touserid) REFERENCES ^users(userid) ON DELETE SET NULL');
+				}
 
 				qa_db_upgrade_query($locktablesquery);
 				break;
 
-			// Up to here: Version 1.8 beta1
+			// Up to here: Version 1.8
 		}
 
 		qa_db_set_db_version($newversion);

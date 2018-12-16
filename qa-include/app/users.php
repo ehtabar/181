@@ -456,6 +456,17 @@ if (QA_FINAL_EXTERNAL_USERS) {
 				require_once QA_INCLUDE_DIR . 'db/selects.php';
 				$qa_cached_logged_in_user = qa_db_get_pending_result('loggedinuser', qa_db_user_account_selectspec($userid, true));
 
+				// If the site is configured to share the ^users table then there might not be a record in the
+				// ^userpoints table so this creates it
+				if ($qa_cached_logged_in_user['points'] === null) {
+					require_once QA_INCLUDE_DIR . 'db/points.php';
+					require_once QA_INCLUDE_DIR . 'db/users.php';
+
+					qa_db_points_update_ifuser($userid, null);
+					qa_db_uapprovecount_update();
+					$qa_cached_logged_in_user = qa_db_single_select(qa_db_user_account_selectspec($userid, true));
+				}
+
 				if (!isset($qa_cached_logged_in_user)) {
 					// the user can no longer be found (should only apply to deleted users)
 					qa_clear_session_user();
@@ -552,36 +563,16 @@ if (QA_FINAL_EXTERNAL_USERS) {
 
 		$url = qa_path_html('user/' . $handle);
 		$favclass = $favorited ? ' qa-user-favorited' : '';
-		$mfAttr = $microdata ? ' itemprop="name"' : '';
-		$mfPrefix = $microdata ? '<span itemprop="author" itemscope itemtype="http://schema.org/Person">' : '';
-		$mfSuffix = $microdata ? '</span>' : '';
+		$mfAttr = $microdata ? ' itemprop="url"' : '';
 
-		return $mfPrefix . '<a href="' . $url . '" class="qa-user-link' . $favclass . '"' . $mfAttr . '>' . qa_html($handle) . '</a>' . $mfSuffix;
-	}
+		$userHandle = $microdata ? '<span itemprop="name">' . qa_html($handle) . '</span>' : qa_html($handle);
+		$userHtml = '<a href="' . $url . '" class="qa-user-link' . $favclass . '"' . $mfAttr . '>' . $userHandle . '</a>';
 
-
-	/**
-	 * Return the URL for the Gravatar corresponding to $email, constrained to $size
-	 *
-	 * @param string $email The email of the Gravatar to return
-	 * @param int|null $size The size of the Gravatar to return. If omitted the default size will be used
-	 * @return string The URL to the Gravatar of the user
-	 */
-	function qa_get_gravatar_url($email, $size = null)
-	{
-		if (qa_to_override(__FUNCTION__)) { $args=func_get_args(); return qa_call_override(__FUNCTION__, $args); }
-
-		$link = 'https://www.gravatar.com/avatar/%s';
-
-		$params = array(md5(strtolower(trim($email))));
-
-		$size = (int)$size;
-		if ($size > 0) {
-			$link .= '?s=%d';
-			$params[] = $size;
+		if ($microdata) {
+			$userHtml = '<span itemprop="author" itemscope itemtype="http://schema.org/Person">' . $userHtml . '</span>';
 		}
 
-		return vsprintf($link, $params);
+		return $userHtml;
 	}
 
 
@@ -648,7 +639,6 @@ if (QA_FINAL_EXTERNAL_USERS) {
 	 * @param string $email The user's email. Only needed to return the Gravatar HTML
 	 * @param string $blobId The blob ID. Only needed to return the locally stored avatar HTML
 	 * @param string $handle The handle of the user that the avatar will link to
-	 * @param string $blobId The blob ID. Only needed to return the locally stored avatar
 	 * @param int $width The width to constrain the image
 	 * @param int $height The height to constrain the image
 	 * @param int $size The size to constrain the final image
@@ -660,9 +650,6 @@ if (QA_FINAL_EXTERNAL_USERS) {
 		if (qa_to_override(__FUNCTION__)) { $args=func_get_args(); return qa_call_override(__FUNCTION__, $args); }
 
 		require_once QA_INCLUDE_DIR . 'app/format.php';
-		if (strlen($handle) == 0) {
-			return null;
-		}
 
 		$avatarSource = qa_get_user_avatar_source($flags, $email, $blobId);
 
@@ -675,6 +662,9 @@ if (QA_FINAL_EXTERNAL_USERS) {
 				break;
 			case 'local-default':
 				$html = qa_get_avatar_blob_html(qa_opt('avatar_default_blobid'), qa_opt('avatar_default_width'), qa_opt('avatar_default_height'), $size, $padding);
+				if (strlen($handle) == 0) {
+					return $html;
+				}
 				break;
 			default: // NULL
 				return null;
@@ -687,7 +677,7 @@ if (QA_FINAL_EXTERNAL_USERS) {
 	/**
 	 * Return email address for user $userid (if not using single sign-on integration)
 	 * @param $userid
-	 * @return
+	 * @return string
 	 */
 	function qa_get_user_email($userid)
 	{
@@ -1405,4 +1395,29 @@ function qa_check_form_security_code($action, $value)
 	}
 
 	return (empty($silentproblems) && empty($reportproblems));
+}
+
+
+/**
+ * Return the URL for the Gravatar corresponding to $email, constrained to $size
+ *
+ * @param string $email The email of the Gravatar to return
+ * @param int|null $size The size of the Gravatar to return. If omitted the default size will be used
+ * @return string The URL to the Gravatar of the user
+ */
+function qa_get_gravatar_url($email, $size = null)
+{
+	if (qa_to_override(__FUNCTION__)) { $args=func_get_args(); return qa_call_override(__FUNCTION__, $args); }
+
+	$link = 'https://www.gravatar.com/avatar/%s';
+
+	$params = array(md5(strtolower(trim($email))));
+
+	$size = (int)$size;
+	if ($size > 0) {
+		$link .= '?s=%d';
+		$params[] = $size;
+	}
+
+	return vsprintf($link, $params);
 }

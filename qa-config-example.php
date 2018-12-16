@@ -65,11 +65,15 @@
 
 /*
 	If you wish, you can define QA_MYSQL_USERS_PREFIX separately from QA_MYSQL_TABLE_PREFIX.
-	If so, it is used instead of QA_MYSQL_TABLE_PREFIX as the prefix for tables containing
-	information about user accounts (not including users' activity and points). This allows
-	multiple Q2A sites to have shared logins and users, but separate posts and activity.
+	If so, tables containing information about user accounts (not including users' activity and points)
+	get the prefix of QA_MYSQL_TABLE_PREFIX. This allows multiple Q2A sites to have shared logins
+	and users, but separate posts and activity.
 
-	define('QA_MYSQL_USERS_PREFIX', 'qa_users_');
+	If you have installed question2answer with default "qa_" prefix and want to setup a second
+	installation, you define the QA_MYSQL_USERS_PREFIX as "qa_" so this new installation
+	can access the same database as the first installation.
+
+	define('QA_MYSQL_USERS_PREFIX', 'sharedusers_');
 */
 
 /*
@@ -86,10 +90,10 @@
 */
 
 /*
-	If you wish to use caching, you must define QA_CACHE_DIRECTORY to store the cache files. The
-	directory must be writable by the web server. It also must be OUTSIDE the public root. For
-	example if your site resides in '/var/www/yoursite/public_html', then the cache directory could
-	be '/var/www/yoursite/qa-cache', but it cannot be '/var/www/yoursite/public_html/qa-cache'.
+	If you wish to use file-based caching, you must define QA_CACHE_DIRECTORY to store the cache
+	files. The directory must be writable by the web server. For maximum security it's STRONGLY
+	recommended to place the folder outside of the web root (so they can never be accessed via a
+	web browser).
 
 	define('QA_CACHE_DIRECTORY', '/path/to/writable_cache_directory/');
 */
@@ -139,8 +143,8 @@
 /*
 	Out-of-the-box Joomla! 3.x integration - to integrate with your Joomla! site, define
 	QA_JOOMLA_INTEGRATE_PATH. as the full path to the Joomla! directory. If your Q2A
-    site is a subdirectory of your main Joomla site (recommended), you can specify
-    dirname(__DIR__) rather than the full path.
+	site is a subdirectory of your main Joomla site (recommended), you can specify
+	dirname(__DIR__) rather than the full path.
 	With this set, you do not need to set the QA_MYSQL_* constants above since these
 	will be taken from Joomla automatically. See online documentation for more details.
 
@@ -150,9 +154,9 @@
 /*
 	Some settings to help optimize your Question2Answer site's performance.
 
-	If QA_HTML_COMPRESSION is true, HTML web pages will be output using Gzip compression, if
-	the user's browser indicates this is supported. This will increase the performance of your
-	site, but may make debugging harder if PHP does not complete execution.
+	If QA_HTML_COMPRESSION is true, HTML web pages will be output using Gzip compression, which
+	will increase the performance of your site (if the user's browser indicates this is supported).
+	This is best done at the server level if possible, but many hosts don't provide server access.
 
 	QA_MAX_LIMIT_START is the maximum start parameter that can be requested, for paging through
 	long lists of questions, etc... As the start parameter gets higher, queries tend to get
@@ -184,7 +188,7 @@
 	bottom of every Question2Answer page.
 */
 
-	define('QA_HTML_COMPRESSION', true);
+	define('QA_HTML_COMPRESSION', false);
 	define('QA_MAX_LIMIT_START', 19999);
 	define('QA_IGNORED_WORDS_FREQ', 10000);
 	define('QA_ALLOW_UNINDEXED_QUERIES', false);

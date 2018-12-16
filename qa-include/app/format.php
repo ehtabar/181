@@ -381,8 +381,8 @@ function qa_post_html_fields($post, $userid, $cookieid, $usershtml, $dummy, $opt
 		if (@$options['categoryview'] && isset($post['categoryname']) && isset($post['categorybackpath'])) {
 			$favoriteclass = '';
 
-			if (count(@$favoritemap['category'])) {
-				if (@$favoritemap['category'][$post['categorybackpath']]) {
+			if (isset($favoritemap['category']) && !empty($favoritemap['category'])) {
+				if (isset($favoritemap['category'][$post['categorybackpath']])) {
 					$favoriteclass = ' qa-cat-favorited';
 				} else {
 					foreach ($favoritemap['category'] as $categorybackpath => $dummy) {
@@ -754,6 +754,11 @@ function qa_who_to_html($isbyuser, $postuserid, $usershtml, $ip = null, $microda
 			$whohtml = qa_lang_html('main/me');
 		else
 			$whohtml = qa_lang_html('main/anonymous');
+
+		if ($microdata) {
+			// duplicate HTML from qa_get_one_user_html()
+			$whohtml = '<span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">' . $whohtml . '</span></span>';
+		}
 
 		if (isset($ip))
 			$whohtml = qa_ip_anchor_html($ip, $whohtml);

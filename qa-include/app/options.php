@@ -108,15 +108,6 @@ function qa_opt_if_loaded($name)
 
 
 /**
- * @deprecated Deprecated since Q2A 1.3 now that all options are retrieved together.
- * @param $names
- */
-function qa_options_set_pending($names)
-{
-}
-
-
-/**
  * Load all of the Q2A options from the database.
  * From Q2A 1.8 we always load the options in a separate query regardless of QA_OPTIMIZE_DISTANT_DB.
  */
@@ -382,7 +373,7 @@ function qa_default_option($name)
 		'show_view_counts' => 0,
 		'show_when_created' => 1,
 		'site_text_direction' => 'ltr',
-		'site_theme' => 'Snow',
+		'site_theme' => 'SnowFlat',
 		'smtp_port' => 25,
 		'sort_answers_by' => 'created',
 		'tags_or_categories' => 'tc',
@@ -398,7 +389,13 @@ function qa_default_option($name)
 
 	switch ($name) {
 		case 'site_url':
-			$value = 'http://' . @$_SERVER['HTTP_HOST'] . strtr(rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'), '\\', '/') . '/';
+			$protocol =
+				(!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+				(!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on') ||
+				(!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+					? 'https'
+					: 'http';
+			$value = $protocol . '://' . @$_SERVER['HTTP_HOST'] . strtr(rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'), '\\', '/') . '/';
 			break;
 
 		case 'site_title':
@@ -645,7 +642,7 @@ function qa_message_html_defaults()
 
 /**
  * Return $voteview parameter to pass to qa_post_html_fields() in /qa-include/app/format.php.
- * @param $postorbasetype The post, or for compatibility just a basetype, i.e. 'Q', 'A' or 'C'
+ * @param array|string $postorbasetype The post, or for compatibility just a basetype, i.e. 'Q', 'A' or 'C'
  * @param bool $full Whether full post is shown
  * @param bool $enabledif Whether to do checks for voting buttons (i.e. will always disable voting if false)
  * @return bool|string Possible values:

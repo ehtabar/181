@@ -44,8 +44,8 @@ function qa_db_increment_views($postid)
 /**
  * Recalculate the hotness in the database for one or more posts.
  *
- * @param $firstpostid First post to recalculate (or only post if $lastpostid is null).
- * @param $lastpostid Last post in the range to recalculate.
+ * @param int $firstpostid First post to recalculate (or only post if $lastpostid is null).
+ * @param int $lastpostid Last post in the range to recalculate.
  * @param bool $viewincrement Deprecated - view counter is now incremented separately. Previously, would increment the post's
  *   views and include that in the hotness calculation.
  * @return void
@@ -61,7 +61,7 @@ function qa_db_hotness_update($firstpostid, $lastpostid = null, $viewincrement =
 	if (!isset($lastpostid))
 		$lastpostid = $firstpostid;
 
-	$query = "UPDATE ^posts AS x, (SELECT parents.postid, parents.created AS qcreated, COALESCE(MAX(children.created), parents.created) as acreated, children.acount, parents.netvotes, parents.views FROM ^posts AS parents LEFT JOIN ^posts AS children ON parents.postid=children.parentid AND children.type='A' WHERE parents.postid BETWEEN # AND # GROUP BY postid) AS a SET x.hotness=(" .
+	$query = "UPDATE ^posts AS x, (SELECT parents.postid, MAX(parents.created) AS qcreated, COALESCE(MAX(children.created), MAX(parents.created)) as acreated, COUNT(children.postid) AS acount, MAX(parents.netvotes) AS netvotes, MAX(parents.views) AS views FROM ^posts AS parents LEFT JOIN ^posts AS children ON parents.postid=children.parentid AND children.type='A' WHERE parents.postid BETWEEN # AND # GROUP BY postid) AS a SET x.hotness=(" .
 		'((TO_DAYS(a.qcreated)-734138)*86400.0+TIME_TO_SEC(a.qcreated))*# + ' . // zero-point is Jan 1, 2010
 		'((TO_DAYS(a.acreated)-734138)*86400.0+TIME_TO_SEC(a.acreated))*# + ' .
 		'(a.acount+0.0)*# + ' .
