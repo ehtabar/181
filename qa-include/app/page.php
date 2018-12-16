@@ -638,7 +638,7 @@ function qa_content_prepare($voting = false, $categoryids = array())
 	}
 
 	$qa_content['search'] = array(
-		'form_tags' => 'method="get" action="' . qa_path_html('gsearch') . '"',
+		'form_tags' => 'method="get" action="' . qa_path_html('search') . '"',
 		'form_extra' => qa_path_form_html('search'),
 		'title' => qa_lang_html('main/search_title'),
 		'field_tags' => 'name="q"',
@@ -798,7 +798,7 @@ function qa_content_prepare($voting = false, $categoryids = array())
 		}
 	}
 
-	$qa_content['script_rel'] = array('qa-content/jquery-3.2.1.min.js');
+	$qa_content['script_rel'] = array('qa-content/jquery-3.3.1.min.js');
 	$qa_content['script_rel'][] = 'qa-content/qa-global.js?' . QA_VERSION;
 
 	if ($voting)

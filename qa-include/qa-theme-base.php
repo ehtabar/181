@@ -64,25 +64,6 @@ class qa_html_theme_base
 	 */
 	public function __construct($template, $content, $rooturl, $request)
 	{
-		
-		/**
-		*	410 response handler
-		*	get current full url
-		*	fetch users inserted urls and expode into urls array
-		*	check if current url exsit in users 410 urls response 410 and exit
-		*/
-		if (qa_opt('qa410_urls')){
-			$actual_link = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-			$urls=explode(",",qa_html(qa_opt('qa410_urls')));
-			
-			foreach ($urls as $key => $value) {
-				if ($actual_link==trim($value)){
-				header("HTTP/1.0 410 Gone");
-				}
-			}
-			
-		}
-
 		$this->template = $template;
 		$this->content = $content;
 		$this->rooturl = $rooturl;
@@ -169,31 +150,18 @@ class qa_html_theme_base
 	 * @param string $innertag
 	 * @param string $extraclass
 	 */
-	public function output_split($parts, $class, $outertag='span', $innertag='span', $extraclass=null , $href = null )
+	public function output_split($parts, $class, $outertag = 'span', $innertag = 'span', $extraclass = null)
 	{
-    if (empty($parts) && strtolower($outertag) != 'td')
-      return;
+		if (empty($parts) && strtolower($outertag) != 'td')
+			return;
 
-    if ($href != null)
-    {
-      $this->output(
-        '<'.$outertag." href=".$href.' class="'.$class.(isset($extraclass) ? (' '.$extraclass) : '').'">',
-        (strlen(@$parts['prefix']) ? ('<'.$innertag.' href='.$href.' class="'.$class.'-pad">'.$parts['prefix'].'</'.$innertag.'>') : '').
-        (strlen(@$parts['data']) ? ('<'.$innertag.' href='.$href.' class="'.$class.'-data">'.$parts['data'].'</'.$innertag.'>') : '').
-        (strlen(@$parts['suffix']) ? ('<'.$innertag.' href='.$href.' class="'.$class.'-pad">'.$parts['suffix'].'</'.$innertag.'>') : ''),
-        '</'.$outertag.'>'
-      );
-    }
-    else
-    {
-      $this->output(
-        '<'.$outertag.' class="'.$class.(isset($extraclass) ? (' '.$extraclass) : '').'">',
-        (strlen(@$parts['prefix']) ? ('<'.$innertag.' class="'.$class.'-pad">'.$parts['prefix'].'</'.$innertag.'>') : '').
-        (strlen(@$parts['data']) ? ('<'.$innertag.' class="'.$class.'-data">'.$parts['data'].'</'.$innertag.'>') : '').
-        (strlen(@$parts['suffix']) ? ('<'.$innertag.' class="'.$class.'-pad">'.$parts['suffix'].'</'.$innertag.'>') : ''),
-        '</'.$outertag.'>'
-      );
-    }
+		$this->output(
+			'<' . $outertag . ' class="' . $class . (isset($extraclass) ? (' ' . $extraclass) : '') . '">',
+			(strlen(@$parts['prefix']) ? ('<' . $innertag . ' class="' . $class . '-pad">' . $parts['prefix'] . '</' . $innertag . '>') : '') .
+			(strlen(@$parts['data']) ? ('<' . $innertag . ' class="' . $class . '-data">' . $parts['data'] . '</' . $innertag . '>') : '') .
+			(strlen(@$parts['suffix']) ? ('<' . $innertag . ' class="' . $class . '-pad">' . $parts['suffix'] . '</' . $innertag . '>') : ''),
+			'</' . $outertag . '>'
+		);
 	}
 
 
@@ -290,7 +258,7 @@ class qa_html_theme_base
 
 	public function html()
 	{
-		$attribution = '<!-- Powered by Bidbarg - https://www.bidbarg.com/ -->';
+		$attribution = '<!-- Powered by Question2Answer - http://www.question2answer.org/ -->';
 		$extratags = isset($this->content['html_tags']) ? $this->content['html_tags'] : '';
 
 		$this->output(
@@ -428,8 +396,7 @@ class qa_html_theme_base
 
 	public function body_hidden()
 	{
-		$indent = $this->isRTL ? '9999px' : '-9999px';
-		$this->output('<div style="position:absolute; left:' . $indent . '; top:-9999px;">');
+		$this->output('<div style="position:absolute;overflow:hidden;clip:rect(0 0 0 0);height:0;width:0;margin:0;padding:0;border:0;">');
 		$this->waiting_template();
 		$this->output('</div>');
 	}
@@ -749,6 +716,7 @@ class qa_html_theme_base
 		$extratags = isset($this->content['main_tags']) ? $this->content['main_tags'] : '';
 
 		$this->output('<div class="qa-main' . $hidden . '"' . $extratags . '>');
+
 		$this->widgets('main', 'top');
 
 		$this->page_title_error();
@@ -769,7 +737,7 @@ class qa_html_theme_base
 
 	public function page_title_error()
 	{
-	if (isset($this->content['title'])) {
+		if (isset($this->content['title'])) {
 			$favorite = isset($this->content['favorite']) ? $this->content['favorite'] : null;
 
 			if (isset($favorite))
@@ -778,12 +746,7 @@ class qa_html_theme_base
 			$this->output('<div class="qa-main-heading">');
 			$this->favorite();
 			$this->output('<h1>');
-			if(isset($this->content['page_title'])) {
-				$this->output($this->content['page_title']);
-			}
-			else{
-				$this->title();
-			}
+			$this->title();
 			$this->output('</h1>');
 			$this->output('</div>');
 
@@ -949,7 +912,7 @@ class qa_html_theme_base
 
 		$this->output(
 			'<div class="qa-attribution">',
-			'Powered by <a href="https://www.bidbarg.com/">bidbarg</a>',
+			'Powered by <a href="http://www.question2answer.org/">Question2Answer</a>',
 			'</div>'
 		);
 	}
@@ -970,7 +933,7 @@ class qa_html_theme_base
 	public function part_title($part)
 	{
 		if (strlen(@$part['title']) || strlen(@$part['title_tags']))
-			$this->output('<p' . rtrim(' ' . @$part['title_tags']) . '>' . @$part['title'] . '</p>');
+			$this->output('<h2' . rtrim(' ' . @$part['title_tags']) . '>' . @$part['title'] . '</h2>');
 	}
 
 	public function part_footer($part)
@@ -1858,13 +1821,12 @@ class qa_html_theme_base
 	}
 
 	public function a_count($post)
-  {
+	{
+		// You can also use $post['answers_raw'] to get a raw integer count of answers
 
-    // You can also use $post['answers_raw'] to get a raw integer count of answers
-
-    $this->output_split(@$post['answers'], 'qa-a-count', 'span', 'a',
-      @$post['answer_selected'] ? 'qa-a-count-selected' : (@$post['answers_raw'] ? null : 'qa-a-count-zero'),@$post['url']);
-  }
+		$this->output_split(@$post['answers'], 'qa-a-count', 'span', 'span',
+			@$post['answer_selected'] ? 'qa-a-count-selected' : (@$post['answers_raw'] ? null : 'qa-a-count-zero'));
+	}
 
 	public function view_count($post)
 	{
@@ -1997,7 +1959,7 @@ class qa_html_theme_base
 				$classes .= ' ' . $class . '-what-your';
 
 			if (isset($post['what_url']))
-				$this->output('<a itemprop="url" href="' . $post['what_url'] . '" class="' . $classes . '">' . $post['what'] . '</a>');
+				$this->output('<a href="' . $post['what_url'] . '" class="' . $classes . '">' . $post['what'] . '</a>');
 			else
 				$this->output('<span class="' . $classes . '">' . $post['what'] . '</span>');
 		}
@@ -2188,7 +2150,6 @@ class qa_html_theme_base
 			$this->q_view_clear();
 
 			$this->output('</div> <!-- END qa-q-view -->', '');
-			$this->output('<div><a  rel="nofollow"   href="https://www.bidbarg.com/?cd=&b=bimebanner"><img src="https://www.bidbarg.com/pic/bimeh.gif"  alt="دریافت مشاوره تخصصی >>"/></a>  </div>');
 		}
 	}
 
@@ -2562,6 +2523,4 @@ class qa_html_theme_base
 
 		$this->output('</div>');
 	}
-	
 }
-

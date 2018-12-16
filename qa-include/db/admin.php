@@ -288,13 +288,13 @@ function qa_db_category_child_depth($categoryid)
  * @param $tags
  * @return mixed
  */
-function qa_db_category_create($parentid, $title, $tags ,$pageTitle, $subject)
+function qa_db_category_create($parentid, $title, $tags)
 {
 	$lastpos = qa_db_category_last_pos($parentid);
 
 	qa_db_query_sub(
-		'INSERT INTO ^categories (parentid, title, tags, position,page_title ,subject) VALUES (#, $, $, #, $, $)',
-		$parentid, $title, $tags, 1 + $lastpos ,$pageTitle, $subject
+		'INSERT INTO ^categories (parentid, title, tags, position) VALUES (#, $, $, #)',
+		$parentid, $title, $tags, 1 + $lastpos
 	);
 
 	$categoryid = qa_db_last_insert_id();
@@ -328,11 +328,11 @@ function qa_db_categories_recalc_backpaths($firstcategoryid, $lastcategoryid = n
  * @param $title
  * @param $tags
  */
-function qa_db_category_rename($categoryid, $title, $tags,$pageTitle , $subject)
+function qa_db_category_rename($categoryid, $title, $tags)
 {
 	qa_db_query_sub(
-		'UPDATE ^categories SET title=$, tags=$ ,page_title =$,  subject=$ WHERE categoryid=#',
-		$title, $tags ,$pageTitle , $subject, $categoryid
+		'UPDATE ^categories SET title=$, tags=$ WHERE categoryid=#',
+		$title, $tags, $categoryid
 	);
 
 	qa_db_categories_recalc_backpaths($categoryid); // may also require recalculation of its offspring's backpaths
@@ -684,4 +684,3 @@ function qa_db_widget_delete($widgetid)
 {
 	qa_db_ordered_delete('widgets', 'widgetid', $widgetid);
 }
-

@@ -49,7 +49,7 @@ class qa_category_list
 			$nav = qa_category_navigation($navcategories);
 		}
 
-		$this->themeobject->output('<p>' . qa_lang_html('main/nav_categories') . '</p>');
+		$this->themeobject->output('<h2>' . qa_lang_html('main/nav_categories') . '</h2>');
 		$this->themeobject->set_context('nav_type', 'cat');
 		$this->themeobject->nav_list($nav, 'nav-cat', 1);
 		$this->themeobject->nav_clear('cat');

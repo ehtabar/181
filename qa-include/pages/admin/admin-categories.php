@@ -134,8 +134,6 @@ if (qa_clicked('docancel')) {
 		$inparentid = $setparent ? qa_get_category_field_value('parent') : $editcategory['parentid'];
 		$inposition = qa_post_text('position');
 		$errors = array();
-		$title = qa_post_text('title');
-		$subject =qa_post_text('subject');		
 
 		// Check the parent ID
 
@@ -207,7 +205,7 @@ if (qa_clicked('docancel')) {
 
 		if (empty($errors)) {
 			if (isset($editcategory['categoryid'])) { // changing existing category
-				qa_db_category_rename($editcategory['categoryid'], $inname, $inslug,$title,$subject);
+				qa_db_category_rename($editcategory['categoryid'], $inname, $inslug);
 
 				$recalc = false;
 
@@ -223,7 +221,7 @@ if (qa_clicked('docancel')) {
 				qa_redirect(qa_request(), array('edit' => $editcategory['categoryid'], 'saved' => true, 'recalc' => (int)$recalc));
 
 			} else { // creating a new one
-				$categoryid = qa_db_category_create($inparentid, $inname, $inslug,$title,$subject);
+				$categoryid = qa_db_category_create($inparentid, $inname, $inslug);
 
 				qa_db_category_set_content($categoryid, $incontent);
 
@@ -322,22 +320,6 @@ if ($setmissing) {
 				'error' => qa_html(@$errors['content']),
 				'rows' => 2,
 			),
-			'title' => array(
-					'id' => 'page_title',
-					'tags' => 'name="title"',
-					'label' => qa_lang_html('admin/page_title'),
-					'value' => @$editcategory['page_title'],
-					'error' => qa_html(@$errors['title']),
-					'rows' => 2,
-				),
-			'subject' => array(
-					'id' => 'page_subject',
-					'tags' => 'name="subject"',
-					'label' => qa_lang_html('admin/page_subject'),
-					'value' => @$editcategory['subject'],
-					'error' => qa_html(@$errors['content']),
-					'rows' => 2,
-				)
 		),
 
 		'buttons' => array(
@@ -646,4 +628,3 @@ $qa_content['navigation']['sub'] = qa_admin_sub_navigation();
 
 
 return $qa_content;
-

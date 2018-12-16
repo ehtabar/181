@@ -63,12 +63,6 @@ function qa_q_list_page_content($questions, $pagesize, $start, $count, $sometitl
 	require_once QA_INCLUDE_DIR . 'app/format.php';
 	require_once QA_INCLUDE_DIR . 'app/updates.php';
 
-	if(isset($sometitle['subject']) || isset($sometitle['page_title']))
-	{
-		$sometitle_array=$sometitle;
-		$sometitle=$sometitle['subject'];
-	}
-
 	$userid = qa_get_logged_in_userid();
 
 
@@ -93,15 +87,8 @@ function qa_q_list_page_content($questions, $pagesize, $start, $count, $sometitl
 		),
 	);
 
-	// set meta description on category pages
-	if (!empty($navcategories[$categoryid]['content'])) {
-		$qa_content['description'] = qa_html($navcategories[$categoryid]['content']);
-	}
-	
 	$qa_content['q_list']['qs'] = array();
-	
-	if (isset($sometitle_array['page_title'])){$qa_content['page_title'] = $sometitle_array['page_title'];}
-	
+
 	if (count($questions)) {
 		$qa_content['title'] = $sometitle;
 
@@ -265,4 +252,3 @@ function qa_unanswered_sub_navigation($by, $categoryslugs)
 
 	return $navigation;
 }
-

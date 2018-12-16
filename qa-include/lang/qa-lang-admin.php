@@ -286,7 +286,4 @@ return array(
 	'widget_not_available' => 'This widget is not available. This could be because the plugin providing the widget is no longer installed.',
 	'widget_pages_explanation' => 'Show widget in this position on the following pages:',
 	'widgets_explanation' => 'Available widgets:',
-	'page_title'=>'Page Title',
-	'page_subject'=>'Page Subject'
 );
-

@@ -32,7 +32,6 @@ require_once QA_INCLUDE_DIR . 'app/format.php';
 
 $requestparts = explode('/', qa_request());
 $explicitqa = (strtolower($requestparts[0]) == 'qa');
-$start = qa_get_start();
 
 if ($explicitqa) {
 	$slugs = array_slice($requestparts, 1);
@@ -50,12 +49,13 @@ $countslugs = count($slugs);
 $userid = qa_get_logged_in_userid();
 
 list($questions1, $questions2, $categories, $categoryid, $custompage) = qa_db_select_with_pending(
-	qa_db_qs_selectspec($userid, 'created', $start, $slugs, null, false, false, qa_opt_if_loaded('page_size_activity')),
-	qa_db_recent_a_qs_selectspec($userid, $start, $slugs),
+	qa_db_qs_selectspec($userid, 'created', 0, $slugs, null, false, false, qa_opt_if_loaded('page_size_activity')),
+	qa_db_recent_a_qs_selectspec($userid, 0, $slugs),
 	qa_db_category_nav_selectspec($slugs, false, false, true),
 	$countslugs ? qa_db_slugs_to_category_id_selectspec($slugs) : null,
 	($countslugs == 1 && !$explicitqa) ? qa_db_page_full_selectspec($slugs[0], false) : null
 );
+
 
 // First, if this matches a custom page, return immediately with that page's content
 
@@ -144,24 +144,13 @@ if ($countslugs) {
 }
 
 
-$sometitle_array = array();
-if(isset($categories[$categoryid]['subject'])) {
-		$sometitle_array['subject']=qa_html($categories[$categoryid]['subject']);
-		$sometitle=$sometitle_array;
-	}
-if(isset($categories[$categoryid]['page_title'])) {
-		$sometitle_array['page_title']=qa_html($categories[$categoryid]['page_title']);
-		$sometitle=$sometitle_array;
-	}
-
-
 // Prepare and return content for theme for Q&A listing page
 
 $qa_content = qa_q_list_page_content(
 	$questions, // questions
 	$pagesize, // questions per page
-	$start, // start offset
-	$countslugs ? $categories[$categoryid]['qcount'] : qa_opt('cache_qcount'), // total count
+	0, // start offset
+	null, // total count (null to hide page links)
 	$sometitle, // title if some questions
 	$nonetitle, // title if no questions
 	$categories, // categories for navigation
@@ -169,12 +158,12 @@ $qa_content = qa_q_list_page_content(
 	true, // show question counts in category navigation
 	$explicitqa ? 'qa/' : '', // prefix for links in category navigation
 	qa_opt('feed_for_qa') ? 'qa' : null, // prefix for RSS feed paths (null to hide)
-	$countslugs ? qa_html_suggest_qs_tags(qa_using_tags()) : qa_html_suggest_ask($categoryid), // suggest what to do next
+	(count($questions) < $pagesize) // suggest what to do next
+		? qa_html_suggest_ask($categoryid)
+		: qa_html_suggest_qs_tags(qa_using_tags(), qa_category_path_request($categories, $categoryid)),
 	null, // page link params
 	null // category nav params
 );
 
-$qa_content['page_links'] = qa_html_page_links(qa_request(), $start, $pagesize, $countslugs ? $categories[$categoryid]['qcount'] : qa_opt('cache_qcount'), qa_opt('pages_prev_next'));
 
 return $qa_content;
-
